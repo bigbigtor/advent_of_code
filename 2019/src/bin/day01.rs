@@ -7,9 +7,25 @@ fn main() -> io::Result<()> {
                      .filter_map(|s| s.parse().ok())
                      .map(calculate_fuel)
                      .collect::<Vec<u32>>();
-    let res1: u32 = fuels.into_iter().sum();
+    let res1: u32 = fuels.clone().into_iter().sum();
+    let res2: u32 = fuels.into_iter().map(calculate_fuel_recursive).sum();
     println!("{}", res1);
+    println!("{}", res2);
     Ok(())
+}
+
+fn calculate_fuel_recursive(mass: u32) -> u32 {
+    let mut result = mass;
+    let mut partial_res = mass;
+    loop {
+        partial_res = calculate_fuel(partial_res);
+        if partial_res > 0 {
+            result += partial_res;
+        } else {
+            break;
+        }
+    }
+    result
 }
 
 fn calculate_fuel(mass: u32) -> u32 {
