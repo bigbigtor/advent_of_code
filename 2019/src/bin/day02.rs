@@ -9,6 +9,21 @@ fn main() -> io::Result<()> {
     let mut computer = computer::Computer::new(); 
     let output = computer.run(&program, 12, 2);
     println!("{}", output[0]);
+    let mut noun = 0;
+    let mut verb = 0;
+    let mut found = false;
+    for n in 0..99 {
+        for v in 0..99 {
+            if computer.run(&program, n, v)[0] == 19690720 {
+                noun = n;
+                verb = v;
+                found = true;
+                break;
+            }
+        }
+        if found { break; }
+    }
+    println!("{}", 100 * noun + verb);
     Ok(())
 }
 
