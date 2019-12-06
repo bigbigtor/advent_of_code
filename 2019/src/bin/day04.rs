@@ -2,9 +2,17 @@ use std::io;
 
 fn main() -> io::Result<()> {
     let (min, max) = read_input();
-    let res: u32 = (min..=max).map(|n| if is_valid(n) {1} else {0})
-                              .sum();
-    println!("{}", res);
+    let mut res1 = 0;
+    let mut res2 = 0;
+    (min..max).for_each(|n| {
+        let digi_vec = digit_vec_from(n);
+        let only_gte = only_gte(&digi_vec);
+        let cont_adj = contains_same_adjacent(&digi_vec);
+        let two_adj = only_two_adjacent(&digi_vec);
+        if only_gte && cont_adj { res1 += 1; }
+        if only_gte && two_adj { res2 += 1; }
+    });
+    println!("{}\n{}", res1, res2);
     Ok(())
 }
 
@@ -42,10 +50,17 @@ fn contains_same_adjacent(digits: &Vec<u32>) -> bool {
     false
 }
 
-fn is_valid(num: u32) -> bool {
-    let digi_vec = digit_vec_from(num);
-    contains_same_adjacent(&digi_vec) && 
-        only_gte(&digi_vec)
+fn only_two_adjacent(digits: &Vec<u32>) -> bool {
+    let mut counts = vec![0; 10];
+    for d in digits {
+        counts[*d as usize] += 1;
+    }
+    for c in counts {
+        if c == 2 {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -55,18 +70,55 @@ mod tests {
     #[test]
     fn test_valid1() {
         let num = 111111;
-        assert!(is_valid(num));
+        let digi_vec = digit_vec_from(num);
+        let only_gte = only_gte(&digi_vec);
+        let cont_adj = contains_same_adjacent(&digi_vec);
+        assert!(only_gte && cont_adj);
     }
 
     #[test]
     fn test_valid2() {
         let num = 223450;
-        assert!(!is_valid(num));
+        let digi_vec = digit_vec_from(num);
+        let only_gte = only_gte(&digi_vec);
+        let cont_adj = contains_same_adjacent(&digi_vec);
+        assert!(!(only_gte && cont_adj));
     }
     
     #[test]
     fn test_valid3() {
         let num = 123789;
-        assert!(!is_valid(num));
+        let digi_vec = digit_vec_from(num);
+        let only_gte = only_gte(&digi_vec);
+        let cont_adj = contains_same_adjacent(&digi_vec);
+        assert!(!(only_gte && cont_adj));
     }
+
+    #[test]
+    fn test_valid4() {
+        let num = 112233;
+        let digi_vec = digit_vec_from(num);
+        let only_gte = only_gte(&digi_vec);
+        let two_adj = only_two_adjacent(&digi_vec);
+        assert!(only_gte && two_adj);
+    }
+
+    #[test]
+    fn test_valid5() {
+        let num = 123444;
+        let digi_vec = digit_vec_from(num);
+        let only_gte = only_gte(&digi_vec);
+        let two_adj = only_two_adjacent(&digi_vec);
+        assert!(!(only_gte && two_adj));
+    }
+
+    #[test]
+    fn test_valid6() {
+        let num = 111122;
+        let digi_vec = digit_vec_from(num);
+        let only_gte = only_gte(&digi_vec);
+        let two_adj = only_two_adjacent(&digi_vec);
+        assert!(only_gte && two_adj);
+    }
+
 }
