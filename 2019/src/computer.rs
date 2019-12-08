@@ -1,5 +1,7 @@
+use std::io;
+
 pub struct Computer {
-    memory: Vec<usize>,
+    memory: Vec<i32>,
     ic: usize,
 }
 
@@ -11,9 +13,9 @@ impl Computer {
         }
     }
 
-    pub fn run(self: &mut Self, input: &Vec<usize>, noun: usize, verb: usize) -> Vec<usize> {
+    pub fn run(self: &mut Self, program: &Vec<i32>, noun: i32, verb: i32) -> Vec<i32> {
         self.memory.clear();
-        self.memory.append(&mut input.clone());
+        self.memory.append(&mut program.clone());
         self.memory[1] = noun;
         self.memory[2] = verb;
         self.ic = 0;
@@ -21,18 +23,33 @@ impl Computer {
             let opcode = self.memory[self.ic];
             match opcode {
                 1 => {
-                    let op1_addr = self.memory[self.ic + 1];
-                    let op2_addr = self.memory[self.ic + 2];
-                    let dst_addr = self.memory[self.ic + 3];
+                    let op1_addr = self.memory[self.ic + 1] as usize;
+                    let op2_addr = self.memory[self.ic + 2] as usize;
+                    let dst_addr = self.memory[self.ic + 3] as usize;
                     self.memory[dst_addr] = self.memory[op1_addr] + self.memory[op2_addr];
                     self.ic += 4;
                 },
                 2 => {
-                    let op1_addr = self.memory[self.ic + 1];
-                    let op2_addr = self.memory[self.ic + 2];
-                    let dst_addr = self.memory[self.ic + 3];
+                    let op1_addr = self.memory[self.ic + 1] as usize;
+                    let op2_addr = self.memory[self.ic + 2] as usize;
+                    let dst_addr = self.memory[self.ic + 3] as usize;
                     self.memory[dst_addr] = self.memory[op1_addr] * self.memory[op2_addr];
                     self.ic += 4;
+                },
+                3 => {
+                    let mut input = String::new();
+                    io::stdin().read_line(&mut input).expect("wrong input");
+                    let input = input.trim()
+                                     .parse::<i32>()
+                                     .unwrap();
+                    let dst_addr = self.memory[self.ic + 1] as usize;
+                    self.memory[dst_addr] = input;
+                    self.ic += 2;
+                },
+                4 => {
+                    let src_addr = self.memory[self.ic + 1] as usize;
+                    println!("{}", self.memory[src_addr]);
+                    self.ic += 2;
                 },
                 99 => break,
                 o => panic!("Wrong opcode{}", o),
