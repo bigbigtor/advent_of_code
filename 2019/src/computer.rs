@@ -18,24 +18,46 @@ impl Computer {
         self.memory.append(&mut program.clone());
         self.ic = 0;
         loop {
-            let opcode = self.memory[self.ic];
+            let instruction = self.memory[self.ic];
+            let opcode = instruction % 100;
             match opcode {
                 1 => {
-                    let op1_addr = self.memory[self.ic + 1] as usize;
-                    let op2_addr = self.memory[self.ic + 2] as usize;
+                    let op1_mode = instruction / 100 % 10;
+                    let op2_mode = instruction / 1000 % 10;
+                    let op1 = match op1_mode {
+                        0 => self.memory[self.memory[self.ic + 1] as usize],
+                        1 => self.memory[self.ic + 1],
+                        o => panic!("Unsupported mode: {}", o),
+                    };
+                    let op2 = match op2_mode {
+                        0 => self.memory[self.memory[self.ic + 2] as usize],
+                        1 => self.memory[self.ic + 2],
+                        o => panic!("Unsupported mode: {}", o),
+                    };
                     let dst_addr = self.memory[self.ic + 3] as usize;
-                    self.memory[dst_addr] = self.memory[op1_addr] + self.memory[op2_addr];
+                    self.memory[dst_addr] = op1 + op2;
                     self.ic += 4;
                 },
                 2 => {
-                    let op1_addr = self.memory[self.ic + 1] as usize;
-                    let op2_addr = self.memory[self.ic + 2] as usize;
+                    let op1_mode = instruction / 100 % 10;
+                    let op2_mode = instruction / 1000 % 10;
+                    let op1 = match op1_mode {
+                        0 => self.memory[self.memory[self.ic + 1] as usize],
+                        1 => self.memory[self.ic + 1],
+                        o => panic!("Unsupported mode: {}", o),
+                    };
+                    let op2 = match op2_mode {
+                        0 => self.memory[self.memory[self.ic + 2] as usize],
+                        1 => self.memory[self.ic + 2],
+                        o => panic!("Unsupported mode: {}", o),
+                    };
                     let dst_addr = self.memory[self.ic + 3] as usize;
-                    self.memory[dst_addr] = self.memory[op1_addr] * self.memory[op2_addr];
+                    self.memory[dst_addr] = op1 * op2;
                     self.ic += 4;
                 },
                 3 => {
                     let mut input = String::new();
+                    println!("Please, enter the input value (integer):");
                     io::stdin().read_line(&mut input).expect("wrong input");
                     let input = input.trim()
                                      .parse::<i32>()
@@ -45,8 +67,13 @@ impl Computer {
                     self.ic += 2;
                 },
                 4 => {
-                    let src_addr = self.memory[self.ic + 1] as usize;
-                    println!("{}", self.memory[src_addr]);
+                    let src_mode = instruction / 100 % 10;
+                    let src = match src_mode {
+                        0 => self.memory[self.memory[self.ic + 1] as usize],
+                        1 => self.memory[self.ic + 1],
+                        o => panic!("Unsupported mode: {}", o),
+                    };
+                    println!("{}", src);
                     self.ic += 2;
                 },
                 99 => break,
