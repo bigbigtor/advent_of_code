@@ -13,6 +13,24 @@ impl Computer {
         }
     }
 
+    fn get_first_operand(&self, inst: i32) -> i32 {
+        let param_mode = inst / 100 % 10;
+        match param_mode {
+            0 => self.memory[self.memory[self.ic + 1] as usize],
+            1 => self.memory[self.ic + 1],
+            o => panic!("Unsupported mode: {}", o),
+        }
+    }
+
+    fn get_second_operand(&self, inst: i32) -> i32 {
+        let param_mode = inst / 1000 % 10;
+        match param_mode {
+            0 => self.memory[self.memory[self.ic + 2] as usize],
+            1 => self.memory[self.ic + 2],
+            o => panic!("Unsupported mode: {}", o),
+        }
+    }
+
     pub fn run(self: &mut Self, program: &Vec<i32>) -> Vec<i32> {
         self.memory.clear();
         self.memory.append(&mut program.clone());
@@ -22,37 +40,15 @@ impl Computer {
             let opcode = instruction % 100;
             match opcode {
                 1 => {
-                    let op1_mode = instruction / 100 % 10;
-                    let op2_mode = instruction / 1000 % 10;
-                    let op1 = match op1_mode {
-                        0 => self.memory[self.memory[self.ic + 1] as usize],
-                        1 => self.memory[self.ic + 1],
-                        o => panic!("Unsupported mode: {}", o),
-                    };
-                    let op2 = match op2_mode {
-                        0 => self.memory[self.memory[self.ic + 2] as usize],
-                        1 => self.memory[self.ic + 2],
-                        o => panic!("Unsupported mode: {}", o),
-                    };
                     let dst_addr = self.memory[self.ic + 3] as usize;
-                    self.memory[dst_addr] = op1 + op2;
+                    self.memory[dst_addr] = self.get_first_operand(instruction) 
+                                          + self.get_second_operand(instruction);
                     self.ic += 4;
                 },
                 2 => {
-                    let op1_mode = instruction / 100 % 10;
-                    let op2_mode = instruction / 1000 % 10;
-                    let op1 = match op1_mode {
-                        0 => self.memory[self.memory[self.ic + 1] as usize],
-                        1 => self.memory[self.ic + 1],
-                        o => panic!("Unsupported mode: {}", o),
-                    };
-                    let op2 = match op2_mode {
-                        0 => self.memory[self.memory[self.ic + 2] as usize],
-                        1 => self.memory[self.ic + 2],
-                        o => panic!("Unsupported mode: {}", o),
-                    };
                     let dst_addr = self.memory[self.ic + 3] as usize;
-                    self.memory[dst_addr] = op1 * op2;
+                    self.memory[dst_addr] = self.get_first_operand(instruction) 
+                                          * self.get_second_operand(instruction);
                     self.ic += 4;
                 },
                 3 => {
@@ -67,14 +63,34 @@ impl Computer {
                     self.ic += 2;
                 },
                 4 => {
-                    let src_mode = instruction / 100 % 10;
-                    let src = match src_mode {
-                        0 => self.memory[self.memory[self.ic + 1] as usize],
-                        1 => self.memory[self.ic + 1],
-                        o => panic!("Unsupported mode: {}", o),
-                    };
-                    println!("{}", src);
+                    println!("{}", self.get_first_operand(instruction));
                     self.ic += 2;
+                },
+                5 => {
+                    if self.get_first_operand(instruction) != 0 {
+                        self.ic = self.get_second_operand(instruction) as usize;
+                    } else {
+                        self.ic += 3;
+                    }
+                },
+                6 => {
+                    if self.get_first_operand(instruction) == 0 {
+                        self.ic = self.get_second_operand(instruction) as usize;
+                    } else {
+                        self.ic += 3;
+                    }
+                },
+                7 => {
+                    let dst_addr = self.memory[self.ic + 3] as usize;
+                    self.memory[dst_addr] = if self.get_first_operand(instruction)
+                                             < self.get_second_operand(instruction) { 1 } else { 0 };
+                    self.ic += 4;
+                },
+                8 => {
+                    let dst_addr = self.memory[self.ic + 3] as usize;
+                    self.memory[dst_addr] = if self.get_first_operand(instruction)
+                                            == self.get_second_operand(instruction) { 1 } else { 0 };
+                    self.ic += 4;
                 },
                 99 => break,
                 o => panic!("Wrong opcode{}", o),

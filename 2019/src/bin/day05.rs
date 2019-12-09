@@ -12,7 +12,8 @@ fn main() -> io::Result<()> {
 }
 
 fn parse(input: String) -> Vec<i32> {
-    input.split(',')
-         .filter_map(|s| s.parse().ok())
+    input.trim()
+         .split(',')
+         .map(|s| s.parse().unwrap())
          .collect()
 }
