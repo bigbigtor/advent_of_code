@@ -13,11 +13,9 @@ impl Computer {
         }
     }
 
-    pub fn run(self: &mut Self, program: &Vec<i32>, noun: i32, verb: i32) -> Vec<i32> {
+    pub fn run(self: &mut Self, program: &Vec<i32>) -> Vec<i32> {
         self.memory.clear();
         self.memory.append(&mut program.clone());
-        self.memory[1] = noun;
-        self.memory[2] = verb;
         self.ic = 0;
         loop {
             let opcode = self.memory[self.ic];
@@ -68,7 +66,7 @@ mod tests {
         let mut computer= Computer::new();
         let input = vec![1,0,0,0,99];
         let output = vec![2,0,0,0,99];
-        assert_eq!(computer.run(&input, 0, 0), output);
+        assert_eq!(computer.run(&input), output);
     }
 
     #[test]
@@ -76,7 +74,7 @@ mod tests {
         let mut computer= Computer::new();
         let input = vec![2,3,0,3,99];
         let output = vec![2,3,0,6,99];
-        assert_eq!(computer.run(&input, 3, 0), output);
+        assert_eq!(computer.run(&input), output);
     }
 
     #[test]
@@ -84,7 +82,7 @@ mod tests {
         let mut computer= Computer::new();
         let input = vec![2,4,4,5,99,0];
         let output = vec![2,4,4,5,99,9801];
-        assert_eq!(computer.run(&input, 4, 4), output);
+        assert_eq!(computer.run(&input), output);
     }
 
     #[test]
@@ -92,6 +90,6 @@ mod tests {
         let mut computer= Computer::new();
         let input = vec![1,1,1,4,99,5,6,0,99];
         let output = vec![30,1,1,4,2,5,6,0,99];
-        assert_eq!(computer.run(&input, 1, 1), output);
+        assert_eq!(computer.run(&input), output);
     }
 }

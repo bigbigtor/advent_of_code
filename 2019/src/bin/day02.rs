@@ -5,25 +5,25 @@ use advent_of_code_2019::computer;
 fn main() -> io::Result<()> {
     let mut buffer = String::new();
     io::stdin().read_to_string(&mut buffer)?;
-    let program = parse(buffer);
-    let mut computer = computer::Computer::new(); 
-    let output = computer.run(&program, 12, 2);
+    let mut program = parse(buffer);
+    let mut computer = computer::Computer::new();
+    program[1] = 12;
+    program[2] = 2;
+    let output = computer.run(&program);
     println!("{}", output[0]);
-    let mut noun = 0;
-    let mut verb = 0;
     let mut found = false;
-    for n in 0..99 {
-        for v in 0..99 {
-            if computer.run(&program, n, v)[0] == 19690720 {
-                noun = n;
-                verb = v;
+    for noun in 0..99 {
+        for verb in 0..99 {
+            program[1] = noun;
+            program[2] = verb;
+            if computer.run(&program)[0] == 19690720 {
+                println!("{}", 100 * noun + verb);
                 found = true;
                 break;
             }
         }
         if found { break; }
     }
-    println!("{}", 100 * noun + verb);
     Ok(())
 }
 
