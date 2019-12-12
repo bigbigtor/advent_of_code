@@ -9,14 +9,19 @@ fn main() -> io::Result<()> {
     let mut computer = computer::Computer::new();
     program[1] = 12;
     program[2] = 2;
-    let output = computer.run(&program);
-    println!("{}", output[0]);
+    computer.load(&program);
+    computer.run();
+    let dump = computer.dump_memory();
+    println!("{}", dump[0]);
     let mut found = false;
     for noun in 0..99 {
         for verb in 0..99 {
             program[1] = noun;
             program[2] = verb;
-            if computer.run(&program)[0] == 19690720 {
+            computer.load(&program);
+            computer.run();
+            let dump = computer.dump_memory();
+            if dump[0] == 19690720 {
                 println!("{}", 100 * noun + verb);
                 found = true;
                 break;
