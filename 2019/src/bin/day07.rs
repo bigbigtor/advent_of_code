@@ -16,17 +16,17 @@ fn find_highest_signal(program: &Vec<i32>) -> i32 {
         .map(|phases| {
             let mut amps = init_amps(&program, &phases);
             let mut signal = 0;
-            for i in 0..amps.len() {
-                amps[i].input.push(signal);
+            amps.iter_mut().for_each(|amp| {
+                amp.input.push(signal);
                 loop {
-                    let status = amps[i].run();
+                    let status = amp.run();
                     if status == Status::ReturningOutput {
-                        signal = amps[i].output.remove(0);
+                        signal = amp.output.remove(0);
                     } else if status == Status::Halt {
                         break;
                     }
                 }
-            }
+            });
             signal
         })
         .max()
