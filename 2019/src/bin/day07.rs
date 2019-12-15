@@ -11,7 +11,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn find_highest_signal_feedback_loop(program: &Vec<i32>) -> i32 {
+fn find_highest_signal_feedback_loop(program: &Vec<i64>) -> i64 {
     permute(vec![5, 6, 7, 8, 9])
         .iter()
         .map(|phases| {
@@ -35,7 +35,7 @@ fn find_highest_signal_feedback_loop(program: &Vec<i32>) -> i32 {
         .unwrap()
 }
 
-fn find_highest_signal(program: &Vec<i32>) -> i32 {
+fn find_highest_signal(program: &Vec<i64>) -> i64 {
     permute(vec![0, 1, 2, 3, 4])
         .iter()
         .map(|phases| {
@@ -58,7 +58,7 @@ fn find_highest_signal(program: &Vec<i32>) -> i32 {
         .unwrap()
 }
 
-fn init_amps(program: &Vec<i32>, phases: &Vec<i32>) -> Vec<Computer> {
+fn init_amps(program: &Vec<i64>, phases: &Vec<i64>) -> Vec<Computer> {
     (0..phases.len())
         .map(|p| {
             let mut c = Computer::new();
@@ -69,7 +69,7 @@ fn init_amps(program: &Vec<i32>, phases: &Vec<i32>) -> Vec<Computer> {
         .collect()
 }
 
-fn read_input() -> Vec<i32> {
+fn read_input() -> Vec<i64> {
     let mut buffer = String::new();
     io::stdin().read_to_string(&mut buffer).unwrap();
     buffer.trim()

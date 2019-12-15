@@ -32,7 +32,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn parse(input: String) -> Vec<i32> {
+fn parse(input: String) -> Vec<i64> {
     input.split(',')
          .filter_map(|s| s.parse().ok())
          .collect()

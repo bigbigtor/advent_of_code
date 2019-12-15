@@ -1,8 +1,9 @@
 pub struct Computer {
-    pub input: Vec<i32>,
-    pub output: Vec<i32>,
-    memory: Vec<i32>,
+    pub input: Vec<i64>,
+    pub output: Vec<i64>,
+    memory: Vec<i64>,
     ic: usize,
+    rel_base: usize,
 }
 
 #[derive(PartialEq)]
@@ -19,23 +20,25 @@ impl Computer {
             output: Vec::new(),
             memory: Vec::new(),
             ic: 0,
+            rel_base: 0,
         }
     }
 
-    pub fn dump_memory(&self) -> Vec<i32> {
+    pub fn dump_memory(&self) -> Vec<i64> {
         self.memory.clone()
     }
 
-    fn get_first_operand(&self, inst: i32) -> i32 {
+    fn get_first_operand(&self, inst: i64) -> i64 {
         let param_mode = inst / 100 % 10;
         match param_mode {
             0 => self.memory[self.memory[self.ic + 1] as usize],
             1 => self.memory[self.ic + 1],
+            2 => self.memory[self.rel_base + self.ic + 1],
             o => panic!("Unsupported mode: {}", o),
         }
     }
 
-    fn get_second_operand(&self, inst: i32) -> i32 {
+    fn get_second_operand(&self, inst: i64) -> i64 {
         let param_mode = inst / 1000 % 10;
         match param_mode {
             0 => self.memory[self.memory[self.ic + 2] as usize],
@@ -44,7 +47,7 @@ impl Computer {
         }
     }
 
-    pub fn load(&mut self, program: &Vec<i32>) {
+    pub fn load(&mut self, program: &Vec<i64>) {
         self.memory.clear();
         self.memory.append(&mut program.clone());
         self.ic = 0;
@@ -108,6 +111,10 @@ impl Computer {
                                             == self.get_second_operand(instruction) { 1 } else { 0 };
                     self.ic += 4;
                 },
+                9 => {
+                    self.rel_base += self.get_first_operand(instruction) as usize;
+                    self.ic += 2;
+                }
                 99 => return Status::Halt,
                 o => panic!("Wrong opcode{}", o),
             }
@@ -157,5 +164,30 @@ mod tests {
         computer.load(&input);
         computer.run();
         assert_eq!(computer.memory, output);
+    }
+
+    #[test]
+    fn test_run_5() {
+        let mut computer= Computer::new();
+        let input = vec![109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99];
+        let output = vec![109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99];
+        computer.load(&input);
+        loop {
+            let status = computer.run();
+            if status == Status::Halt { break; }
+        }
+        assert_eq!(computer.output, output);
+    }
+
+    #[test]
+    fn test_run_6() {
+        let mut computer= Computer::new();
+        let input = vec![1102,34915192,34915192,7,4,7,99,0];
+        computer.load(&input);
+        loop {
+            let status = computer.run();
+            if status == Status::Halt { break; }
+        }
+        assert_eq!(computer.output[0].to_string().len(), 16);
     }
 }

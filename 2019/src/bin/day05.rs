@@ -13,7 +13,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn run_diagnostic(program: &Vec<i32>, input: i32) -> Vec<i32> {
+fn run_diagnostic(program: &Vec<i64>, input: i64) -> Vec<i64> {
     let mut output = Vec::new();
     let mut computer = Computer::new();
     computer.load(&program);
@@ -29,7 +29,7 @@ fn run_diagnostic(program: &Vec<i32>, input: i32) -> Vec<i32> {
     output
 }
 
-fn parse(input: String) -> Vec<i32> {
+fn parse(input: String) -> Vec<i64> {
     input.trim()
          .split(',')
          .map(|s| s.parse().unwrap())
