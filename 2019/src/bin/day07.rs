@@ -6,8 +6,33 @@ use advent_of_code_2019::computer::{Computer, Status};
 fn main() -> io::Result<()> {
     let program = read_input();
     let res1 = find_highest_signal(&program);
-    println!("{:?}", res1);
+    let res2 = find_highest_signal_feedback_loop(&program);
+    println!("{:?}\n{:?}", res1, res2);
     Ok(())
+}
+
+fn find_highest_signal_feedback_loop(program: &Vec<i32>) -> i32 {
+    permute(vec![5, 6, 7, 8, 9])
+        .iter()
+        .map(|phases| {
+            let mut amps = init_amps(&program, &phases);
+            let mut signal = 0;
+            let mut halted: Vec<bool> = vec![false; amps.len()];
+            for i in (0..amps.len()).into_iter().cycle() {
+                amps[i].input.push(signal);
+                match amps[i].run() {
+                    Status::ReturningOutput => signal = amps[i].output.remove(0),
+                    Status::Halt => halted[i] = true,
+                    _ => continue,
+                };
+                if halted.iter().all(|&h| h == true) {
+                    break;
+                }
+            }
+            signal
+        })
+        .max()
+        .unwrap()
 }
 
 fn find_highest_signal(program: &Vec<i32>) -> i32 {
@@ -78,6 +103,22 @@ mod tests {
         let program = vec![3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0];
         let output = 65210;
         let res1 = find_highest_signal(&program);
+        assert_eq!(res1, output);
+    }
+
+    #[test]
+    fn test_4() {
+        let program = vec![3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5];
+        let output = 139629729;
+        let res1 = find_highest_signal_feedback_loop(&program);
+        assert_eq!(res1, output);
+    }
+
+    #[test]
+    fn test_5() {
+        let program = vec![3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10];
+        let output = 18216;
+        let res1 = find_highest_signal_feedback_loop(&program);
         assert_eq!(res1, output);
     }
 }
