@@ -3,7 +3,7 @@ pub struct Computer {
     pub output: Vec<i64>,
     memory: Vec<i64>,
     ic: usize,
-    rel_base: usize,
+    rel_base: i64,
 }
 
 #[derive(PartialEq)]
@@ -11,6 +11,12 @@ pub enum Status {
     AwaitingInput,
     ReturningOutput,
     Halt,
+}
+
+enum Mode {
+    Immediate,
+    Position,
+    Relative,
 }
 
 impl Computer {
@@ -28,22 +34,44 @@ impl Computer {
         self.memory.clone()
     }
 
-    fn get_first_operand(&self, inst: i64) -> i64 {
-        let param_mode = inst / 100 % 10;
-        match param_mode {
-            0 => self.memory[self.memory[self.ic + 1] as usize],
-            1 => self.memory[self.ic + 1],
-            2 => self.memory[self.rel_base + self.ic + 1],
-            o => panic!("Unsupported mode: {}", o),
+    fn get_modes(&self, inst: i64, param_num: u32) -> Vec<Mode> {
+        let mut modes = Vec::new();
+        for p in 1..=param_num {
+            let param_mode = inst / (10 as i64).pow(p + 1) % 10;
+            let mode = match param_mode {
+                0 => Mode::Position,
+                1 => Mode::Immediate,
+                2 => Mode::Relative,
+                o => panic!("Unsupported mode: {}", o),
+            };
+            modes.push(mode);
+        }
+        modes
+    }
+
+    fn read_memory(&mut self, pos: usize, mode: &Mode) -> i64 {
+        self.allocate_if_needed(pos);
+        match mode {
+            Mode::Immediate => self.memory[pos],
+            Mode::Position => self.read_memory(self.memory[pos] as usize, &Mode::Immediate),
+            Mode::Relative => self.read_memory((self.rel_base + self.memory[pos]) as usize, &Mode::Immediate),
         }
     }
 
-    fn get_second_operand(&self, inst: i64) -> i64 {
-        let param_mode = inst / 1000 % 10;
-        match param_mode {
-            0 => self.memory[self.memory[self.ic + 2] as usize],
-            1 => self.memory[self.ic + 2],
-            o => panic!("Unsupported mode: {}", o),
+    fn write_memory(&mut self, pos: usize, mode: &Mode, value: i64) {
+        self.allocate_if_needed(pos);
+        let dst_addr = match mode {
+            Mode::Position => self.memory[pos] as usize,
+            Mode::Relative => (self.memory[pos] + self.rel_base) as usize,
+            Mode::Immediate => panic!("Immediate mode not supported for writes"),
+        };
+        self.allocate_if_needed(dst_addr);
+        self.memory[dst_addr] = value;
+    }
+
+    fn allocate_if_needed(&mut self, pos: usize) {
+        if self.memory.len() <= pos {
+            self.memory.resize_with(pos + 1, || 0);
         }
     }
 
@@ -51,6 +79,7 @@ impl Computer {
         self.memory.clear();
         self.memory.append(&mut program.clone());
         self.ic = 0;
+        self.rel_base = 0;
     }
 
     pub fn run(self: &mut Self) -> Status {
@@ -59,60 +88,69 @@ impl Computer {
             let opcode = instruction % 100;
             match opcode {
                 1 => {
-                    let dst_addr = self.memory[self.ic + 3] as usize;
-                    self.memory[dst_addr] = self.get_first_operand(instruction)
-                                          + self.get_second_operand(instruction);
+                    let modes = self.get_modes(instruction, 3);
+                    let result = self.read_memory(self.ic + 1, &modes[0])
+                               + self.read_memory(self.ic + 2, &modes[1]);
+                    self.write_memory(self.ic + 3, &modes[2], result);
                     self.ic += 4;
                 },
                 2 => {
-                    let dst_addr = self.memory[self.ic + 3] as usize;
-                    self.memory[dst_addr] = self.get_first_operand(instruction)
-                                          * self.get_second_operand(instruction);
+                    let modes = self.get_modes(instruction, 3);
+                    let result = self.read_memory(self.ic + 1, &modes[0])
+                               * self.read_memory(self.ic + 2, &modes[1]);
+                    self.write_memory(self.ic + 3, &modes[2], result);
                     self.ic += 4;
                 },
                 3 => {
                     if self.input.is_empty() {
                         return Status::AwaitingInput;
                     } else {
-                        let dst_addr = self.memory[self.ic + 1] as usize;
-                        self.memory[dst_addr] = self.input.remove(0);
+                        let input = self.input.remove(0);
+                        let modes = self.get_modes(instruction, 1);
+                        self.write_memory(self.ic + 1, &modes[0], input);
                         self.ic += 2;
                     }
                 },
                 4 => {
-                    let output = self.get_first_operand(instruction);
+                    let modes = self.get_modes(instruction, 1);
+                    let output = self.read_memory(self.ic +1, &modes[0]);
                     self.output.push(output);
                     self.ic += 2;
                     return Status::ReturningOutput;
                 },
                 5 => {
-                    if self.get_first_operand(instruction) != 0 {
-                        self.ic = self.get_second_operand(instruction) as usize;
+                    let modes = self.get_modes(instruction, 2);
+                    if self.read_memory(self.ic + 1, &modes[0]) != 0 {
+                        self.ic = self.read_memory(self.ic + 2, &modes[1]) as usize;
                     } else {
                         self.ic += 3;
                     }
                 },
                 6 => {
-                    if self.get_first_operand(instruction) == 0 {
-                        self.ic = self.get_second_operand(instruction) as usize;
+                    let modes = self.get_modes(instruction, 2);
+                    if self.read_memory(self.ic + 1, &modes[0]) == 0 {
+                        self.ic = self.read_memory(self.ic + 2, &modes[1]) as usize;
                     } else {
                         self.ic += 3;
                     }
                 },
                 7 => {
-                    let dst_addr = self.memory[self.ic + 3] as usize;
-                    self.memory[dst_addr] = if self.get_first_operand(instruction)
-                                             < self.get_second_operand(instruction) { 1 } else { 0 };
+                    let modes = self.get_modes(instruction, 3);
+                    let result = if self.read_memory(self.ic + 1, &modes[0])
+                                  < self.read_memory(self.ic + 2, &modes[1]) { 1 } else { 0 };
+                    self.write_memory(self.ic + 3, &modes[2], result);
                     self.ic += 4;
                 },
                 8 => {
-                    let dst_addr = self.memory[self.ic + 3] as usize;
-                    self.memory[dst_addr] = if self.get_first_operand(instruction)
-                                            == self.get_second_operand(instruction) { 1 } else { 0 };
+                    let modes = self.get_modes(instruction, 3);
+                    let result = if self.read_memory(self.ic + 1, &modes[0])
+                                 == self.read_memory(self.ic + 2, &modes[1]) { 1 } else { 0 };
+                    self.write_memory(self.ic + 3, &modes[2], result);
                     self.ic += 4;
                 },
                 9 => {
-                    self.rel_base += self.get_first_operand(instruction) as usize;
+                    let modes = self.get_modes(instruction, 1);
+                    self.rel_base += self.read_memory(self.ic + 1, &modes[0]);
                     self.ic += 2;
                 }
                 99 => return Status::Halt,
