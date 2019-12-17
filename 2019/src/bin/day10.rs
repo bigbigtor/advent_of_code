@@ -1,6 +1,7 @@
 use std::io::{self, Read};
 use std::collections::HashSet;
 use std::f32;
+use advent_of_code_2019::point::Point;
 
 fn main() -> io::Result<()> {
     let input = read_input()?;
@@ -10,24 +11,24 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn get_best_count(asteroids: &Vec<(usize, usize)>) -> usize {
+fn get_best_count(asteroids: &Vec<Point>) -> usize {
     asteroids.iter()
-             .map(|(x, y)| get_num_angles(*x, *y, &asteroids))
+             .map(|p| get_num_angles(&p, &asteroids))
              .max()
              .unwrap()
 }
 
-fn get_num_angles(x: usize, y: usize, asteroids: &Vec<(usize, usize)>) -> usize {
+fn get_num_angles(ast: &Point, asteroids: &Vec<Point>) -> usize {
     asteroids.iter()
-             .filter(|(tx, ty)| (*tx, *ty) != (x, y)) //skip myself
-             .map(|(tx, ty)| get_angle(x, y, *tx, *ty))
+             .filter(|&p| p != ast) //skip myself
+             .map(|p| get_angle(&ast, p))
              .collect::<HashSet<i32>>()
              .len()
 }
 
-fn get_angle(x1: usize, y1: usize, x2: usize, y2: usize) -> i32 {
-    let dx = (y2 as i32 - y1 as i32) as f32;
-    let dy = (x2 as i32 - x1 as i32) as f32;
+fn get_angle(p1: &Point, p2: &Point) -> i32 {
+    let dx = (p2.y - p1.y) as f32;
+    let dy = (p2.x - p1.x) as f32;
     let angle = f32::atan2(dy, dx) * 180.0 / f32::consts::PI;
     (angle * 10.0).round() as i32
 }
@@ -38,7 +39,7 @@ fn read_input() -> io::Result<String> {
     Ok(buffer)
 }
 
-fn get_asteroids(input: &str) -> Vec<(usize, usize)> {
+fn get_asteroids(input: &str) -> Vec<Point> {
     input.trim()
           .lines()
           .enumerate()
@@ -46,10 +47,10 @@ fn get_asteroids(input: &str) -> Vec<(usize, usize)> {
               line.chars()
                   .enumerate()
                   .filter(|(_x, c)| *c == '#')
-                  .map(|(x, _c)| (x, y))
+                  .map(|(x, _c)| Point::new(x as i16, y as i16))
                   .collect()
           })
-          .flat_map(|vec: Vec<(usize, usize)>| vec.into_iter())
+          .flat_map(|vec: Vec<Point>| vec.into_iter())
           .collect()
 }
 
@@ -64,9 +65,9 @@ mod tests {
 #####
 ....#
 ...##";
-        let map = get_asteroids(input);
+        let asteroids = get_asteroids(input);
         let output = 8;
-        let res1 = get_best_count(&map);
+        let res1 = get_best_count(&asteroids);
         assert_eq!(res1, output);
     }
 
@@ -82,9 +83,9 @@ mod tests {
 .##.#..###
 ##...#..#.
 .#....####";
-        let map = get_asteroids(input);
+        let asteroids = get_asteroids(input);
         let output = 33;
-        let res1 = get_best_count(&map);
+        let res1 = get_best_count(&asteroids);
         assert_eq!(res1, output);
     }
 
@@ -100,9 +101,9 @@ mod tests {
 ..##....##
 ......#...
 .####.###.";
-        let map = get_asteroids(input);
+        let asteroids = get_asteroids(input);
         let output = 35;
-        let res1 = get_best_count(&map);
+        let res1 = get_best_count(&asteroids);
         assert_eq!(res1, output);
     }
 
@@ -118,9 +119,9 @@ mod tests {
 #..#.#.###
 .##...##.#
 .....#.#..";
-        let map = get_asteroids(input);
+        let asteroids = get_asteroids(input);
         let output = 41;
-        let res1 = get_best_count(&map);
+        let res1 = get_best_count(&asteroids);
         assert_eq!(res1, output);
     }
     #[test]
@@ -145,9 +146,9 @@ mod tests {
 .#.#.###########.###
 #.#.#.#####.####.###
 ###.##.####.##.#..##";
-        let map = get_asteroids(input);
+        let asteroids = get_asteroids(input);
         let output = 210;
-        let res1 = get_best_count(&map);
+        let res1 = get_best_count(&asteroids);
         assert_eq!(res1, output);
     }
 }
