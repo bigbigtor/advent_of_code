@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use crate::point::Point;
+use crate::color::Color;
 use crate::direction::Direction;
 use crate::computer::{Computer, Status};
 
@@ -7,7 +8,6 @@ pub struct Robot {
     brain: Computer,
     current_pos: Point,
     direction: Direction,
-    grid: HashMap<Point, Color>,
 }
 
 impl Robot {
@@ -16,16 +16,15 @@ impl Robot {
             brain: Computer::new(),
             current_pos: Point::new(0, 0),
             direction: Direction::North,
-            grid: HashMap::new(),
         }
     }
 
-    pub fn run(&mut self, input: &Vec<i64>) -> usize {
+    pub fn run(&mut self, input: &Vec<i64>, mut grid: &mut HashMap<Point, Color>) {
         self.brain.load(&input);
         loop {
             let status = self.brain.run();
             if status == Status::AwaitingInput {
-                let input = match self.scan_panel() {
+                let input = match self.scan_panel(&mut grid) {
                     Color::Black => 0,
                     Color::White => 1,
                 };
@@ -36,7 +35,7 @@ impl Robot {
                     1 => Color::White,
                     o => panic!("invalid color: {}", o),
                 };
-                self.paint_panel(&target_color);
+                self.paint_panel(&target_color, &mut grid);
                 if self.brain.run() == Status::ReturningOutput {
                     let turn_dir = self.brain.output.remove(0);
                     self.turn(turn_dir);
@@ -48,7 +47,6 @@ impl Robot {
                 break;
             }
         }
-        self.grid.len()
     }
 
     fn advance(&mut self, num_steps: i16) {
@@ -69,23 +67,17 @@ impl Robot {
         };
     }
 
-    fn paint_panel(&mut self, color: &Color) {
+    fn paint_panel(&mut self, color: &Color, grid: &mut HashMap<Point, Color>) {
         let p = Point::new(self.current_pos.x, self.current_pos.y);
-        if let Some(c) = self.grid.get_mut(&p) {
+        if let Some(c) = grid.get_mut(&p) {
             *c = *color;
         } else {
-            self.grid.insert(p, *color);
+            grid.insert(p, *color);
         }
     }
 
-    fn scan_panel(&mut self) -> Color {
+    fn scan_panel(&mut self, grid: &mut HashMap<Point, Color>) -> Color {
         let p = Point::new(self.current_pos.x, self.current_pos.y);
-        self.grid.entry(p).or_insert(Color::Black).clone()
+        grid.entry(p).or_insert(Color::Black).clone()
     }
-}
-
-#[derive(Copy, Clone)]
-enum Color {
-    Black,
-    White,
 }
