@@ -9,3 +9,5 @@ pub mod direction;
 pub mod moon;
 pub mod arcade_cabinet;
 pub mod tile;
+pub mod joystick;
+pub mod screen;

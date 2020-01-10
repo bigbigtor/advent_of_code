@@ -2,9 +2,11 @@ use std::io::{self, Read};
 use advent_of_code_2019::arcade_cabinet::ArcadeCabinet;
 
 fn main() -> io::Result<()> {
-    let input = read_input();
+    let mut input = read_input();
+    input[0] = 2; //setting the quarters to play for free
     let mut arcade = ArcadeCabinet::new();
     arcade.load_game(&input);
+    arcade.initialize_game();
     arcade.start_game();
     Ok(())
 }

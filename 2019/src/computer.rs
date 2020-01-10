@@ -6,7 +6,7 @@ pub struct Computer {
     rel_base: i64,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Status {
     AwaitingInput,
     ReturningOutput,
