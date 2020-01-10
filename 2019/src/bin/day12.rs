@@ -11,7 +11,9 @@ fn main() -> io::Result<()> {
         Moon::apply_velocity(&mut moons);
     }
     let energy = Moon::get_system_total_energy(&moons);
+    let steps = Moon::get_cycle_steps(&moons);
     println!("{}", energy);
+    println!("{}", steps);
     Ok(())
 }
 

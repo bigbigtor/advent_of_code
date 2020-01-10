@@ -55,6 +55,55 @@ impl Moon {
                 .map(|&v| if v < 0 { -v } else { v } as u64)
                 .sum()
     }
+
+    pub fn get_cycle_steps(moons: &Vec<Moon>) -> u64 {
+        let x_steps = Moon::get_cycle_steps_axis(&moons, 0);
+        let y_steps = Moon::get_cycle_steps_axis(&moons, 1);
+        let z_steps = Moon::get_cycle_steps_axis(&moons, 2);
+        Moon::lcm(x_steps, Moon::lcm(y_steps, z_steps))
+    }
+
+    pub fn get_cycle_steps_axis(moons: &Vec<Moon>, axis: usize) -> u64 {
+        let mut result = 1;
+        let ipos: Vec<i64> = moons.iter()
+                                  .map(|m| m.pos[axis])
+                                  .collect();
+        let ivel: Vec<i64> = moons.iter()
+                                  .map(|m| m.vel[axis])
+                                  .collect();
+        let mut pos = ipos.clone();
+        let mut vel = ivel.clone();
+        loop {
+            for pair in (0..pos.len()).into_iter().combinations(2) {
+                let (a, b) = (pair[0], pair[1]);
+                let val = pos[a].cmp(&pos[b]) as i64;
+                vel[a] -= val;
+                vel[b] += val;
+            }
+            pos.iter_mut().enumerate().for_each(|(i, p)| *p += vel[i]);
+            if ipos == pos && ivel == vel {
+                break;
+            } else {
+                result += 1;
+            }
+        }
+        result
+    }
+
+    fn lcm(a: u64, b: u64) -> u64 {
+        a * b / Moon::gcd(a, b)
+    }
+
+    fn gcd(x: u64, y: u64) -> u64 {
+        let mut x = x;
+        let mut y = y;
+        while y != 0 {
+            let t = y;
+            y = x % y;
+            x = t;
+        }
+        x
+    }
 }
 
 #[cfg(test)]
