@@ -3,7 +3,7 @@ use crate::tile::Tile;
 use crate::joystick::Joystick;
 use crate::screen::Screen;
 use crate::point::Point;
-use std::{thread, time, cmp};
+use std::cmp::Ordering;
 
 pub struct ArcadeCabinet {
     computer: Computer,
@@ -53,14 +53,12 @@ impl ArcadeCabinet {
 
     pub fn start_game(&mut self) {
         loop {
-            //let ms = time::Duration::from_millis(20);
-            //thread::sleep(ms);
             match self.computer.run() {
                 Status::AwaitingInput => {
                     self.joystick = match self.ball_pos.x.cmp(&self.paddle_pos.x) {
-                         cmp::Ordering::Less => Joystick::TiltedLeft,
-                         cmp::Ordering::Equal => Joystick::Neutral,
-                         cmp::Ordering::Greater => Joystick::TiltedRight,
+                         Ordering::Less => Joystick::TiltedLeft,
+                         Ordering::Equal => Joystick::Neutral,
+                         Ordering::Greater => Joystick::TiltedRight,
                     };
                     let input = self.joystick.read_input();
                     self.computer.input.push(input);
