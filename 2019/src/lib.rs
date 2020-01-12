@@ -11,3 +11,4 @@ pub mod arcade_cabinet;
 pub mod tile;
 pub mod joystick;
 pub mod screen;
+pub mod nanofactory;
