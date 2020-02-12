@@ -12,3 +12,6 @@ pub mod tile;
 pub mod joystick;
 pub mod screen;
 pub mod nanofactory;
+pub mod repair_droid;
+pub mod diagnostic;
+pub mod map;

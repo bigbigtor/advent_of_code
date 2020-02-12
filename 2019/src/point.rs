@@ -1,3 +1,5 @@
+use crate::direction::Direction;
+
 #[derive(Hash, Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Point {
     pub x: i16,
@@ -10,6 +12,16 @@ impl Point {
             x: x,
             y: y,
         }
+    }
+
+    pub fn step(&self, dir: Direction) -> Point {
+        let (x, y) = match dir {
+            Direction::North => ( 0,  1),
+            Direction::South => ( 0, -1),
+            Direction::West  => (-1,  0),
+            Direction::East  => ( 1,  0),
+        };
+        self.translate((x, y))
     }
 
     pub fn translate(&self, (x, y): (i16, i16)) -> Point {
