@@ -32,10 +32,7 @@ impl RepairDroid {
     }
 
     fn step(&mut self, dir: Direction, origin: Point) {
-        self.brain.run();
-        self.brain.input.push(dir as i64);
-        self.brain.run();
-        let diag = Diagnostic::from(self.brain.output.remove(0));
+        let diag = self.get_diagnostic(dir);
         let current = origin.step(dir);
         self.map.insert(current, diag);
         if diag == Diagnostic::FoundTarget ||
@@ -47,5 +44,12 @@ impl RepairDroid {
                }
         }
         println!("{}", self.map);
+    }
+
+    fn get_diagnostic(&mut self, dir: Direction) -> Diagnostic {
+        self.brain.run();
+        self.brain.input.push(dir as i64);
+        self.brain.run();
+        Diagnostic::from(self.brain.output.remove(0))
     }
 }
