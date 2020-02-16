@@ -32,7 +32,6 @@ impl RepairDroid {
     }
 
     fn step(&mut self, dir: Direction, origin: Point) {
-        if self.map.contains_key(&origin.step(dir)) { return }
         self.brain.run();
         self.brain.input.push(dir as i64);
         self.brain.run();
@@ -41,8 +40,11 @@ impl RepairDroid {
         self.map.insert(current, diag);
         if diag == Diagnostic::FoundTarget ||
            diag == Diagnostic::Moved {
-               Direction::iter()
-                         .for_each(|&d| self.step(d, current));
+               for &d in Direction::iter() {
+                   if !self.map.contains_key(&current.step(d)) {
+                       self.step(d, current);
+                   }
+               }
         }
         println!("{}", self.map);
     }
