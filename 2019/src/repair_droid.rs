@@ -21,25 +21,29 @@ impl RepairDroid {
         self.brain.load(&program);
     }
 
-    pub fn run(&mut self) -> Option<Point> {
-        self.step(Direction::North, Point::new(0, 0))
+    pub fn get_target_position(&self) -> Option<Point> {
+        self.map.iter()
+                .find(|(_k, &v)| v == Diagnostic::FoundTarget)
+                .map(|(k, _v)| *k)
     }
 
-    fn step(&mut self, dir: Direction, origin: Point) -> Option<Point> {
-        if self.map.contains_key(&origin.step(dir)) { return None }
+    pub fn map_area(&mut self) {
+        self.step(Direction::North, Point::new(0, 0));
+    }
+
+    fn step(&mut self, dir: Direction, origin: Point) {
+        if self.map.contains_key(&origin.step(dir)) { return }
         self.brain.run();
         self.brain.input.push(dir as i64);
         self.brain.run();
         let diag = Diagnostic::from(self.brain.output.remove(0));
         let current = origin.step(dir);
         self.map.insert(current, diag);
-        println!("{}", self.map);
-        match diag {
-            Diagnostic::HitAWall => None,
-            Diagnostic::FoundTarget => Some(current),
-            Diagnostic::Moved => Direction::iter()
-                                           .filter_map(|&d| self.step(d, current))
-                                           .next(),
+        if diag == Diagnostic::FoundTarget ||
+           diag == Diagnostic::Moved {
+               Direction::iter()
+                         .for_each(|&d| self.step(d, current));
         }
+        println!("{}", self.map);
     }
 }

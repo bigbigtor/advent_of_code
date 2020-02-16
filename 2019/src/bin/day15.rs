@@ -5,7 +5,8 @@ fn main() -> io::Result<()> {
     let input = read_input();
     let mut droid = RepairDroid::new();
     droid.load(&input);
-    let res1 = droid.run();
+    droid.map_area();
+    let res1 = droid.get_target_position();
     println!("{:?}", res1);
     Ok(())
 }
