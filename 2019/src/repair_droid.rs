@@ -22,14 +22,11 @@ impl RepairDroid {
     }
 
     pub fn run(&mut self) -> Option<Point> {
-        let current = Point::new(0, 0);
-        self.map.insert(current, Diagnostic::Moved);
-        Direction::iter()
-                  .filter_map(|&dir| self.step(dir, current))
-                  .next()
+        self.step(Direction::North, Point::new(0, 0))
     }
 
     fn step(&mut self, dir: Direction, origin: Point) -> Option<Point> {
+        if self.map.contains_key(&origin.step(dir)) { return None }
         self.brain.run();
         self.brain.input.push(dir as i64);
         self.brain.run();
@@ -41,12 +38,8 @@ impl RepairDroid {
             Diagnostic::HitAWall => None,
             Diagnostic::FoundTarget => Some(current),
             Diagnostic::Moved => Direction::iter()
-                                           .filter_map(|&d|
-                                               match self.map.contains_key(&current.step(d)) {
-                                                   true => None,
-                                                   false => self.step(d, current),
-                                               }
-                                           ).next(),
+                                           .filter_map(|&d| self.step(d, current))
+                                           .next(),
         }
     }
 }
