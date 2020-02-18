@@ -7,7 +7,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn apply_fft_algorithm(signal: &Vec<u32>, num_phases: u8) -> u32 {
+fn apply_fft_algorithm(signal: &Vec<i32>, num_phases: u8) -> u32 {
     let signal_len = signal.len();
     let pattern = get_pattern_matrix(signal_len);
     let mut signal = signal.clone();
@@ -23,17 +23,14 @@ fn apply_fft_algorithm(signal: &Vec<u32>, num_phases: u8) -> u32 {
           .unwrap()
 }
 
-fn apply_pattern(signal: &Vec<u32>, pattern: &Vec<i32>) -> Vec<u32> {
-    signal.clone()
-          .repeat(signal.len())
+fn apply_pattern(signal: &Vec<i32>, pattern: &Vec<i32>) -> Vec<i32> {
+    signal.repeat(signal.len())
           .iter()
           .zip(pattern.iter())
-          .map(|(&s, &p)| s as i32 * p)
-          .collect::<Vec<i32>>()
+          .map(|(&s, &p)| s * p)
+          .collect::<Vec<_>>()
           .chunks(signal.len())
-          .map(|c| c.to_vec().iter().sum())
-          .map(|n: i32| if n < 0 { -n } else { n })
-          .map(|n| n as u32 % 10)
+          .map(|c| c.iter().sum::<i32>().abs() % 10)
           .collect()
 }
 
@@ -54,12 +51,13 @@ fn get_nth_pattern(n: usize, input_length: usize) -> Vec<i32> {
                  .collect()
 }
 
-fn read_input() -> io::Result<Vec<u32>> {
+fn read_input() -> io::Result<Vec<i32>> {
     let mut buffer = String::new();
     io::stdin().read_to_string(&mut buffer)?;
     let input = buffer.trim()
                       .chars()
                       .filter_map(|c| c.to_digit(10))
+                      .map(|d| d as i32)
                       .collect();
     Ok(input)
 }
