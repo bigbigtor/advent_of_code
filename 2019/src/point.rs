@@ -16,12 +16,18 @@ impl Point {
 
     pub fn step(&self, dir: Direction) -> Point {
         let (x, y) = match dir {
-            Direction::North => ( 0,  1),
-            Direction::South => ( 0, -1),
+            Direction::North => ( 0, -1),
+            Direction::South => ( 0,  1),
             Direction::West  => (-1,  0),
             Direction::East  => ( 1,  0),
         };
         self.translate((x, y))
+    }
+
+    pub fn get_neighbours(&self) -> Vec<Point> {
+        Direction::iter()
+                  .map(|&d| self.step(d))
+                  .collect()
     }
 
     pub fn translate(&self, (x, y): (i16, i16)) -> Point {
@@ -57,5 +63,17 @@ mod tests {
         let p2 = Point::new(-3,-3);
         let output = 6;
         assert_eq!(Point::get_manhattan_distance(&p1, &p2), output);
+    }
+
+    #[test]
+    fn test_neighbours_1() {
+        let p = Point::new(0,0);
+        let output = [
+            Point::new(0, -1),
+            Point::new(0, 1),
+            Point::new(-1, 0),
+            Point::new(1, 0)
+        ];
+        assert_eq!(p.get_neighbours(), output);
     }
 }
