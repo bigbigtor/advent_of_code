@@ -5,19 +5,49 @@ use std::collections::HashMap;
 use std::io::{self, Read};
 
 fn main() -> io::Result<()> {
-    let ascii_program = read_input()?;
+    let mut ascii_program = read_input()?;
     let mut computer = Computer::new();
     computer.load(&ascii_program);
     while computer.run() == Status::ReturningOutput {
         continue;
     }
-    display_map(&computer.output);
+    //display_map(&computer.output);
     let map = populate_map(&computer.output);
     let crossings = find_crossings(&map);
     let res1 = crossings.iter().map(|p| p.x * p.y).sum::<i16>();
     println!("{:?}", res1);
-    println!("{}", serialize_path(&map));
+    //println!("{}", serialize_path(&map));
+    ascii_program[0] = 2;
+    computer.load(&ascii_program);
+    println!("{}", solve_part_2(&mut computer));
     Ok(())
+}
+
+fn solve_part_2(computer: &mut Computer) -> i64 {
+    "A,B,A,A,B,C,B,C,C,B\n"
+        .chars()
+        .map(|c| c as i64)
+        .for_each(|c| computer.input.push(c));
+    "L,12,R,8,L,6,R,8,L,6\n"
+        .chars()
+        .map(|c| c as i64)
+        .for_each(|c| computer.input.push(c));
+    "R,8,L,12,L,12,R,8\n"
+        .chars()
+        .map(|c| c as i64)
+        .for_each(|c| computer.input.push(c));
+    "L,6,R,6,L,12\n"
+        .chars()
+        .map(|c| c as i64)
+        .for_each(|c| computer.input.push(c));
+    "n\n"
+        .chars()
+        .map(|c| c as i64)
+        .for_each(|c| computer.input.push(c));
+    while computer.run() != Status::Halt {
+        continue;
+    }
+    computer.output.pop().unwrap()
 }
 
 fn serialize_path(map: &HashMap<Point, i64>) -> String {
@@ -30,24 +60,32 @@ fn serialize_path(map: &HashMap<Point, i64>) -> String {
         .unwrap();
     let mut cur_point = init_point;
     let mut cur_dir = init_dir;
+    let mut step_count = 0;
     loop {
         let front = cur_point.step(cur_dir);
         let left = cur_point.step(Direction::get_next_anticlockwise(cur_dir));
         let right = cur_point.step(Direction::get_next_clockwise(cur_dir));
         if map.get(&front) == Some(&35) {
             cur_point = front;
-            result.push('#');
+            step_count += 1;
         } else if map.get(&left) == Some(&35) {
-            cur_point = left;
             cur_dir = Direction::get_next_anticlockwise(cur_dir);
-            result.push('L');
-            result.push('#');
+            if step_count > 0 {
+                result.push_str(&step_count.to_string());
+                result.push(',');
+                step_count = 0;
+            }
+            result.push_str("L,");
         } else if map.get(&right) == Some(&35) {
-            cur_point = right;
             cur_dir = Direction::get_next_clockwise(cur_dir);
-            result.push('R');
-            result.push('#');
+            if step_count > 0 {
+                result.push_str(&step_count.to_string());
+                result.push(',');
+                step_count = 0;
+            }
+            result.push_str("R,");
         } else {
+            result.push_str(&step_count.to_string());
             break;
         }
     }
