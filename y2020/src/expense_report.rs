@@ -10,11 +10,12 @@ impl ExpenseReport {
         }
     }
 
-    pub fn fix(&self) -> usize {
-        self.expenses.iter()
-        .combinations(2)
-        .find(|comb| 2020 == (comb[0] + comb[1]))
-        .map(|comb| comb[0] * comb[1])
+    pub fn fix(&self, lenght: usize) -> usize {
+        self.expenses.clone()
+        .into_iter()
+        .combinations(lenght)
+        .find(|comb| comb.iter().sum::<usize>() == 2020)
+        .map(|comb| comb.iter().product())
         .unwrap()
     }
 }
@@ -33,10 +34,11 @@ mod tests {
         1456";
         let input = parse_usize_vec(&raw_input);
         let expense_report = ExpenseReport::new(&input);
-        assert_eq!(expense_report.fix(), 514579);
+        assert_eq!(expense_report.fix(2), 514579);
+        assert_eq!(expense_report.fix(3), 241861950);
     }
     #[test]
-    fn day1_part1() {
+    fn day1() {
         let raw_input = "1082
         1770
         1104
@@ -239,7 +241,8 @@ mod tests {
         1970";
         let input = parse_usize_vec(&raw_input);
         let expense_report = ExpenseReport::new(&input);
-        assert_eq!(expense_report.fix(), 918339);
+        assert_eq!(expense_report.fix(2), 918339); //part1
+        assert_eq!(expense_report.fix(3), 23869440); //part2
     }
 
     fn parse_usize_vec(raw_input: &str) -> Vec<usize> {
