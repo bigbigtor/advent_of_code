@@ -1,3 +1,24 @@
+#[derive(Debug)]
+pub enum PolicyRule {
+    COUNT,
+    POSITION,
+}
+
+impl PolicyRule {
+    pub fn enforce(&self, lower: u8, upper: u8, letter: u8, password: &str) -> bool {
+        match self {
+            Self::COUNT => {
+                let count = password.matches(letter as char).count() as u8;
+                (lower..=upper).contains(&count)
+            },
+            Self::POSITION => {
+                let bytes = password.as_bytes();
+                (bytes[(lower - 1) as usize] == letter) ^ (bytes[(upper - 1) as usize] == letter)
+            },
+        }
+    }
+}
+
 pub struct Policy {
     lower_bound: u8,
     upper_bound: u8,
@@ -13,13 +34,8 @@ impl Policy {
         }
     }
 
-    pub fn validate(&self, password: &str) -> Result<u8,()> {
-        let count = password.matches(self.letter as char).count() as u8;
-        if (self.lower_bound..=self.upper_bound).contains(&count) { 
-            Ok(count) 
-        } else { 
-            Err(())
-        }
+    pub fn validate(&self, password: &str, rule: &PolicyRule) -> bool {
+        rule.enforce(self.lower_bound, self.upper_bound, self.letter, password)
     }
 }
 pub struct PasswordDatabase {
@@ -33,9 +49,9 @@ impl PasswordDatabase {
         }
     }
 
-    pub fn count_valid(&self) -> usize {
+    pub fn count_valid(&self, rule: &PolicyRule) -> usize {
         self.passwords.iter()
-        .filter_map(|(policy, pass)| policy.validate(&pass).ok())
+        .filter(|(policy, pass)| policy.validate(&pass, rule))
         .count()
     }
 }
@@ -48,13 +64,13 @@ mod tests {
     #[test]
     fn validate_works() {
         let policy = Policy::new(1, 3, 'a' as u8);
-        assert!(policy.validate("abcde").is_ok());
+        assert!(policy.validate("abcde", &PolicyRule::COUNT));
     }
 
     #[test]
     fn validate_fails() {
         let policy = Policy::new(1, 3, 'b' as u8);
-        assert!(policy.validate("cdefg").is_err());
+        assert!(!policy.validate("cdefg", &PolicyRule::COUNT));
     }
 
     #[test]
@@ -64,11 +80,12 @@ mod tests {
         2-9 c: ccccccccc";
         let input = parse_input(&raw_input);
         let password_database = PasswordDatabase::new(input);
-        assert_eq!(password_database.count_valid(), 2);
+        assert_eq!(password_database.count_valid(&PolicyRule::COUNT), 2);
+        assert_eq!(password_database.count_valid(&PolicyRule::POSITION), 1);
     }
 
     #[test]
-    fn day2_part1() {
+    fn day2() {
         let raw_input = "15-16 p: ppppppppppplppppp
         4-9 m: xvrwfmkmmmc
         14-15 w: wwwwdwwwwwwwwnwww
@@ -1071,13 +1088,14 @@ mod tests {
         8-9 w: wwwwwwwxww";
         let input = parse_input(&raw_input);
         let password_database = PasswordDatabase::new(input);
-        assert_eq!(password_database.count_valid(), 572);
+        assert_eq!(password_database.count_valid(&PolicyRule::COUNT), 572);
+        assert_eq!(password_database.count_valid(&PolicyRule::POSITION), 306);
     }
 
     fn parse_input(raw_input: &str) -> Vec<(Policy, String)> {
         raw_input.lines()
         .map(|line| line.split(":").next_tuple().unwrap())
-        .map(|(policy, pass)| (parse_policy(policy), pass.into()))
+        .map(|(policy, pass)| (parse_policy(policy), pass.trim().into()))
         .collect()
     }
 
