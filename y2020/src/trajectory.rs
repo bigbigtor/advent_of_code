@@ -34,6 +34,12 @@ impl Map {
         .filter(|&content| content == &Content::Tree)
         .count()
     }
+
+    pub fn get_trees_in_trajectories_for(&self, slopes: Vec<Slope>) -> usize {
+        slopes.iter()
+        .map(|slope| self.get_trees_in_trajectory_for(*slope))
+        .product()
+    }
 }
 
 #[cfg(test)]
@@ -54,12 +60,14 @@ mod tests {
 #...##....#
 .#..#...#.#";
         let slope = (3, 1);
+        let slopes = vec![(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
         let map = parse_map(raw_input);
         assert_eq!(map.get_trees_in_trajectory_for(slope), 7);
+        assert_eq!(map.get_trees_in_trajectories_for(slopes), 336);
     }
 
     #[test]
-    fn day3_part1() {
+    fn day3() {
         let raw_input = ".......#..#....#...#...#......#
 ..##..#...##.###.#..#.....#.#..
 #..#.#....#......#..#.........#
@@ -384,8 +392,10 @@ mod tests {
 .###.........#.....#.##...#....
 .##..#...##...#..#..#.##.......";
         let slope = (3, 1);
+        let slopes = vec![(1, 1), (3, 1), (5, 1), (7, 1), (1, 2)];
         let map = parse_map(raw_input);
         assert_eq!(map.get_trees_in_trajectory_for(slope), 234);
+        assert_eq!(map.get_trees_in_trajectories_for(slopes), 5813773056);
     }
 
     fn parse_map(raw_input: &str) -> Map {
