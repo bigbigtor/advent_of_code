@@ -3,23 +3,47 @@ use std::collections::HashSet;
 
 type Form = Vec<char>;
 
+pub enum CountMode {
+    Everyone,
+    Anyone,
+}
+
 pub struct Group {
     forms: Vec<Form>,
 }
 
 impl Group {
 
-    pub fn get_unique_positive_answers(&self) -> usize {
+    pub fn get_unique_positive_answers(&self, mode: &CountMode) -> usize {
+        match &mode {
+            CountMode::Anyone => self.get_unique_positive_answers_anyone(),
+            CountMode::Everyone => self.get_unique_positive_answers_everyone(),
+        }
+    }
+
+    pub fn sum_positive_answers(groups: &Vec<Group>, mode: CountMode) -> usize {
+        groups.iter()
+        .map(|group| group.get_unique_positive_answers(&mode))
+        .sum()
+    }
+
+    fn get_unique_positive_answers_anyone(&self) -> usize {
+        self.get_unique_positive_answer_set().len()
+    }
+
+    fn get_unique_positive_answers_everyone(&self) -> usize {
         self.forms.iter()
-        .flat_map(|f| f.clone())
-        .collect::<HashSet<_>>()
+        .map(|f| f.iter().collect::<HashSet<_>>())
+        .fold(self.get_unique_positive_answer_set(), |ans, acc| {
+            acc.intersection(&ans).copied().collect()
+        })
         .len()
     }
 
-    pub fn sum_positive_answers(groups: Vec<Group>) -> usize {
-        groups.iter()
-        .map(Group::get_unique_positive_answers)
-        .sum()
+    fn get_unique_positive_answer_set(&self) -> HashSet<&char> {
+        self.forms.iter()
+        .flat_map(|f| f)
+        .collect::<HashSet<_>>()
     }
 }
 
@@ -43,12 +67,22 @@ a
 a
 a");
         let g6 = parse_group("b");
-        assert_eq!(6, g1.get_unique_positive_answers());
-        assert_eq!(3, g2.get_unique_positive_answers());
-        assert_eq!(3, g3.get_unique_positive_answers());
-        assert_eq!(3, g4.get_unique_positive_answers());
-        assert_eq!(1, g5.get_unique_positive_answers());
-        assert_eq!(1, g6.get_unique_positive_answers());
+
+        let mut mode = CountMode::Anyone;
+        assert_eq!(6, g1.get_unique_positive_answers(&mode));
+        assert_eq!(3, g2.get_unique_positive_answers(&mode));
+        assert_eq!(3, g3.get_unique_positive_answers(&mode));
+        assert_eq!(3, g4.get_unique_positive_answers(&mode));
+        assert_eq!(1, g5.get_unique_positive_answers(&mode));
+        assert_eq!(1, g6.get_unique_positive_answers(&mode));
+
+        mode = CountMode::Everyone;
+        assert_eq!(3, g1.get_unique_positive_answers(&mode));
+        assert_eq!(3, g2.get_unique_positive_answers(&mode));
+        assert_eq!(0, g3.get_unique_positive_answers(&mode));
+        assert_eq!(1, g4.get_unique_positive_answers(&mode));
+        assert_eq!(1, g5.get_unique_positive_answers(&mode));
+        assert_eq!(1, g6.get_unique_positive_answers(&mode));
     }
 
     #[test]
@@ -69,7 +103,8 @@ a
 
 b";
         let groups = parse_groups(&raw_input);
-        assert_eq!(11, Group::sum_positive_answers(groups));
+        assert_eq!(11, Group::sum_positive_answers(&groups, CountMode::Anyone));
+        assert_eq!(6, Group::sum_positive_answers(&groups, CountMode::Everyone));
     }
 
     #[test]
@@ -2307,7 +2342,8 @@ qpgfkhbc
 qesdpalbnfjyrzhim
 xocesfutkghymvb";
         let groups = parse_groups(raw_input);
-        assert_eq!(6662, Group::sum_positive_answers(groups));
+        assert_eq!(6662, Group::sum_positive_answers(&groups, CountMode::Anyone));
+        assert_eq!(3382, Group::sum_positive_answers(&groups, CountMode::Everyone));
     }
 
     fn parse_form(raw_input: &str) -> Form {
