@@ -1,10 +1,10 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 type Bag = String;
+type BagQty = (usize, Bag);
 
 pub struct Rules {
-    index: HashMap<Bag, HashSet<Bag>>,
-    inv_index: HashMap<Bag, HashSet<Bag>>,
+    index: HashMap<Bag, Vec<BagQty>>,
 }
 
 impl Rules {
@@ -23,7 +23,7 @@ impl Rules {
             o if o == target => 1,
             _ => if self.index[current]
                      .iter()
-                     .map(|bag| self.find_recursive(target, bag))
+                     .map(|bag_qty| self.find_recursive(target, &bag_qty.1))
                      .sum::<usize>() > 0 { 1 } else { 0 }
         }
     }
@@ -649,14 +649,14 @@ bright chartreuse bags contain 2 wavy blue bags.";
         assert_eq!(197, rules.find_num_containers(&"shiny gold".into()))
     }
 
-    fn parse_rule(raw_input: &str) -> (Vec<Bag>, Bag) {
+    fn parse_rule(raw_input: &str) -> (Vec<BagQty>, Bag) {
         lazy_static! {
             static ref RE: Regex = Regex::new(r"(\d?)\s?(\w+\s\w+)\sbag").unwrap();
         }
         let mut split = raw_input.split(" bags contain ");
         let container = split.next().unwrap().into();
         let contained = RE.captures_iter(split.next().unwrap())
-            .map(|cap| String::from(&cap[2]))
+            .map(|cap| (cap[1].parse::<usize>().ok().unwrap_or(0), String::from(&cap[2])))
             .collect();
         (contained, container)
     } 
@@ -667,25 +667,6 @@ bright chartreuse bags contain 2 wavy blue bags.";
         .map(|(contained, container)| 
             (container, contained.into_iter().collect()))
         .collect();
-
-        let inv_index = raw_input.lines()
-        .map(parse_rule)
-        .flat_map(
-            |(contained, container)| {
-                let len = contained.len();
-                contained.into_iter()
-                .zip(itertools::repeat_n(container, len))
-            }
-        )
-        .fold(
-            HashMap::new(), 
-            |mut acc, (contained, container)| {
-                acc.entry(contained)
-                    .or_insert(HashSet::new())
-                    .insert(container);
-                acc
-            }
-        );
-        Rules { index, inv_index }
+        Rules { index }
     }
 }
