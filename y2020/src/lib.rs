@@ -8,3 +8,4 @@ pub mod trajectory;
 pub mod plane;
 pub mod customs;
 pub mod luggage;
+pub mod console;
