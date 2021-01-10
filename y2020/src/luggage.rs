@@ -27,6 +27,17 @@ impl Rules {
                      .sum::<usize>() > 0 { 1 } else { 0 }
         }
     }
+
+    pub fn find_num_contained(&self, target: &Bag) -> usize {
+        if self.index.contains_key(target) {
+            self.index[target]
+                .iter()
+                .map(|(qty, bag)| qty * (1 + self.find_num_contained(bag)))
+                .sum()
+        } else {
+            0
+        }
+    }
 }
 
 #[cfg(test)]
@@ -47,6 +58,20 @@ faded blue bags contain no other bags.
 dotted black bags contain no other bags.";
         let rules = parse_rules(&raw_input);
         assert_eq!(4, rules.find_num_containers(&"shiny gold".into()));
+        assert_eq!(32, rules.find_num_contained(&"shiny gold".into()));
+    }
+
+    #[test]
+    fn find_num_contained_works() {
+        let raw_input = "shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags.";
+        let rules = parse_rules(&raw_input);
+        assert_eq!(126, rules.find_num_contained(&"shiny gold".into()));
     }
 
     #[test]
@@ -646,26 +671,25 @@ bright olive bags contain 1 dark tan bag, 4 striped orange bags, 3 bright orange
 plaid plum bags contain 1 shiny maroon bag, 1 dotted coral bag.
 bright chartreuse bags contain 2 wavy blue bags.";
         let rules = parse_rules(&raw_input);
-        assert_eq!(197, rules.find_num_containers(&"shiny gold".into()))
+        assert_eq!(197, rules.find_num_containers(&"shiny gold".into()));
+        assert_eq!(85324, rules.find_num_contained(&"shiny gold".into()));
     }
 
-    fn parse_rule(raw_input: &str) -> (Vec<BagQty>, Bag) {
+    fn parse_rule(raw_input: &str) -> (Bag, Vec<BagQty>) {
         lazy_static! {
             static ref RE: Regex = Regex::new(r"(\d?)\s?(\w+\s\w+)\sbag").unwrap();
         }
         let mut split = raw_input.split(" bags contain ");
         let container = split.next().unwrap().into();
         let contained = RE.captures_iter(split.next().unwrap())
-            .map(|cap| (cap[1].parse::<usize>().ok().unwrap_or(0), String::from(&cap[2])))
+            .map(|cap| (cap[1].parse().unwrap_or(0), String::from(&cap[2])))
             .collect();
-        (contained, container)
+        (container, contained)
     } 
 
     fn parse_rules(raw_input: &str) -> Rules {
         let index = raw_input.lines()
         .map(parse_rule)
-        .map(|(contained, container)| 
-            (container, contained.into_iter().collect()))
         .collect();
         Rules { index }
     }
