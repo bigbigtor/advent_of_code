@@ -44,10 +44,10 @@ impl Console {
         self.memory = code.to_owned().to_vec();
     }
 
-    pub fn run(&mut self) -> i32 {
-        loop {
+    pub fn run(&mut self) -> Result<i32, i32> {
+        while self.pc < self.memory.len() {
             if self.run_instructions.contains(&self.pc) {
-                return self.accumulator;
+                return Err(self.accumulator);
             } else {
                 self.run_instructions.insert(self.pc);
             }
@@ -62,6 +62,32 @@ impl Console {
                 (Operation::Nop, _) => self.pc += 1,
             }
         }
+        Ok(self.accumulator)
+    }
+
+    pub fn repair(&mut self) -> i32 {
+        let original_code = self.memory.clone();
+        for inst in 0..self.memory.len() {
+            self.reset();
+            let mut copied_code = original_code.clone();
+            match copied_code[inst] {
+                (Operation::Jmp, _) => copied_code[inst].0 = Operation::Nop,
+                (Operation::Nop, _) => copied_code[inst].0 = Operation::Jmp,
+                _ => (),
+            }
+            self.load_boot_code(&copied_code);
+            match self.run() {
+                Ok(acc) => return acc,
+                Err(_) => (),
+            }
+        }
+        -1
+    }
+
+    fn reset(&mut self) {
+        self.pc = 0;
+        self.accumulator = 0;
+        self.run_instructions = HashSet::new();
     }
 }
 
@@ -83,8 +109,26 @@ acc +6";
         let boot_code = parse_intructions(raw_input);
         let mut console = Console::new();
         console.load_boot_code(&boot_code);
-        assert_eq!(5, console.run());
+        assert_eq!(Err(5), console.run());
     }
+
+    #[test]
+    fn repair_works() {
+        let raw_input = "nop +0
+acc +1
+jmp +4
+acc +3
+jmp -3
+acc -99
+acc +1
+jmp -4
+acc +6";
+        let boot_code = parse_intructions(raw_input);
+        let mut console = Console::new();
+        console.load_boot_code(&boot_code);
+        assert_eq!(8, console.repair());
+    }
+
 
     #[test]
     fn day8() {
@@ -716,7 +760,8 @@ jmp +1";
         let boot_code = parse_intructions(raw_input);
         let mut console = Console::new();
         console.load_boot_code(&boot_code);
-        assert_eq!(1451, console.run());
+        assert_eq!(Err(1451), console.run());
+        assert_eq!(1160, console.repair());
     }
 
     fn parse_intruction(input: &str) -> Instruction {
